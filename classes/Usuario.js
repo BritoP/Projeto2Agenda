@@ -72,6 +72,19 @@ class Usuario {
             throw erro;
         }
     }
+    async buscar(criterio) {
+        try {
+            if (criterio && criterio._id && typeof criterio._id === 'string' && ObjectId.isValid(criterio._id)) {
+                criterio._id = new ObjectId(criterio._id);
+            }
+            const resultado = await this.collection.findOne(criterio);
+            return resultado;
+        } catch (erro) {
+            logErro(`Usuario.buscar: ${erro.message}`);
+            throw erro;
+        }
+    }
+
 }
 
 module.exports = Usuario;

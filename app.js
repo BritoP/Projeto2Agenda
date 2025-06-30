@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(session({
-    secret: 'seuSegredoMuitoSecretoEVaiSerTrocaDoEmProducao123!@#', 
+    secret: 'SegredoSegredosoExtremamenteSecreto123', 
     resave: false, 
     saveUninitialized: false, 
     cookie: {
@@ -42,7 +42,7 @@ app.use(async (req, res, next) => {
 
 
 app.get('/', (req, res) => {
-    res.json({ mensagem: 'Bem-vindo à API da sua Agenda! Utilize os endpoints /usuarios, /eventos, /categorias.' });
+    res.json({ mensagem: 'Bem-vindo à API da Agenda! Utilize os endpoints /usuarios, /eventos, /categorias.' });
 });
 
 
@@ -63,7 +63,7 @@ app.post('/usuarios', async (req, res) => {
 });
 
 
-app.get('/usuarios/:id', async (req, res) => {
+app.get('/usuarios/:id',ensureAuthenticated, async (req, res) => {
     try {
         const usuario = await req.usuarioDb.buscarPorId(req.params.id);
         if (usuario) {
@@ -79,7 +79,7 @@ app.get('/usuarios/:id', async (req, res) => {
 });
 
 
-app.get('/usuarios', async (req, res) => {
+app.get('/usuarios',ensureAuthenticated, async (req, res) => {
     try {
         const usuarios = await req.usuarioDb.buscarTodos();
         const usuariosSemSenhas = usuarios.map(usuario => {
@@ -94,7 +94,7 @@ app.get('/usuarios', async (req, res) => {
 });
 
 
-app.put('/usuarios/:id', async (req, res) => {
+app.put('/usuarios/:id',ensureAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
         const dadosParaAtualizar = req.body;
@@ -121,7 +121,7 @@ app.put('/usuarios/:id', async (req, res) => {
 });
 
 
-app.delete('/usuarios/:id', async (req, res) => {
+app.delete('/usuarios/:id',ensureAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
         const deletedCount = await req.usuarioDb.deletar(id);
@@ -137,7 +137,7 @@ app.delete('/usuarios/:id', async (req, res) => {
 });
 
 
-app.post('/eventos', async (req, res) => {
+app.post('/eventos',ensureAuthenticated,async (req, res) => {
     try {
         const { titulo, data, descricao, idUsuario, idCategoria } = req.body;
         if (!titulo || !data || !idUsuario) { 
@@ -159,7 +159,7 @@ app.post('/eventos', async (req, res) => {
     }
 });
 
-app.get('/eventos/:id', async (req, res) => {
+app.get('/eventos/:id',ensureAuthenticated, async (req, res) => {
     try {
         const evento = await req.eventoDb.buscarPorId(req.params.id);
         if (evento) {
@@ -173,7 +173,7 @@ app.get('/eventos/:id', async (req, res) => {
     }
 });
 
-app.get('/eventos', async (req, res) => {
+app.get('/eventos',ensureAuthenticated, async (req, res) => {
     try {
         const eventos = await req.eventoDb.buscarTodos();
         res.json(eventos);
@@ -183,7 +183,7 @@ app.get('/eventos', async (req, res) => {
     }
 });
 
-app.put('/eventos/:id', async (req, res) => {
+app.put('/eventos/:id', ensureAuthenticated,async (req, res) => {
     try {
         const { id } = req.params;
         const dadosParaAtualizar = req.body;
@@ -213,7 +213,7 @@ app.put('/eventos/:id', async (req, res) => {
     }
 });
 
-app.delete('/eventos/:id', async (req, res) => {
+app.delete('/eventos/:id', ensureAuthenticated,async (req, res) => {
     try {
         const { id } = req.params;
         const deletedCount = await req.eventoDb.deletar(id);
@@ -229,7 +229,7 @@ app.delete('/eventos/:id', async (req, res) => {
 });
 
 
-app.post('/categorias', async (req, res) => {
+app.post('/categorias',ensureAuthenticated, async (req, res) => {
     try {
         const { nome, cor } = req.body;
         if (!nome) {
@@ -246,7 +246,7 @@ app.post('/categorias', async (req, res) => {
 });
 
 
-app.get('/categorias/:id', async (req, res) => {
+app.get('/categorias/:id',ensureAuthenticated, async (req, res) => {
     try {
         const categoria = await req.categoriaDb.buscarPorId(req.params.id);
         if (categoria) {
@@ -261,7 +261,7 @@ app.get('/categorias/:id', async (req, res) => {
 });
 
 
-app.get('/categorias', async (req, res) => {
+app.get('/categorias',ensureAuthenticated, async (req, res) => {
     try {
         const categorias = await req.categoriaDb.buscarTodos(); 
         res.json(categorias);
@@ -272,7 +272,7 @@ app.get('/categorias', async (req, res) => {
 });
 
 
-app.put('/categorias/:id', async (req, res) => {
+app.put('/categorias/:id',ensureAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
         const dadosParaAtualizar = req.body;
@@ -299,7 +299,7 @@ app.put('/categorias/:id', async (req, res) => {
 });
 
 
-app.delete('/categorias/:id', async (req, res) => {
+app.delete('/categorias/:id',ensureAuthenticated, async (req, res) => {
     try {
         const { id } = req.params;
         const deletedCount = await req.categoriaDb.deletar(id);
@@ -314,8 +314,53 @@ app.delete('/categorias/:id', async (req, res) => {
     }
 });
 
+app.post('/login', async (req, res) => {
+    try {
+        const { email, senha } = req.body;
 
+        if (!email || !senha) {
+            logErro('Login: Email e senha são obrigatórios.');
+            return res.status(400).json({ mensagem: 'Email e senha são obrigatórios.' });
+        }
 
+        
+        const usuario = await req.usuarioDb.buscar({ email: email }); 
+
+        if (!usuario) {
+            logErro(`Login: Tentativa de login com email não encontrado: ${email}`);
+            return res.status(401).json({ mensagem: 'Credenciais inválidas (email não encontrado).' });
+        }
+
+        
+        if (usuario.senha !== senha) { 
+            logErro(`Login: Tentativa de login com senha incorreta para o email: ${email}`);
+            return res.status(401).json({ mensagem: 'Credenciais inválidas (senha incorreta).' });
+        }
+
+        
+        req.session.userId = usuario._id.toString(); 
+        req.session.userEmail = usuario.email;       
+        req.session.isAuthenticated = true;          
+
+        logErro(`Login bem-sucedido para o usuário: ${usuario.email}`);
+        res.status(200).json({ mensagem: 'Login bem-sucedido!', usuario: { id: usuario._id, email: usuario.email, nome: usuario.nome } });
+
+    } catch (error) {
+        logErro(`Erro no processo de login: ${error.message}`);
+        res.status(500).json({ mensagem: 'Erro interno do servidor ao tentar fazer login.', detalhe: error.message });
+    }
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            logErro(`Erro ao fazer logout: ${err.message}`);
+            return res.status(500).json({ mensagem: 'Erro ao fazer logout.' });
+        }
+        res.clearCookie('connect.sid');
+        res.status(200).json({ mensagem: 'Logout bem-sucedido.' });
+    });
+});
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}`);
     console.log(`Conectado ao DB: agenda`); 
