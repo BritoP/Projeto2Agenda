@@ -73,6 +73,15 @@ class Categoria {
             throw erro;
         }
     }
+    async buscarTodos() {
+        try {
+            const resultados = await this.collection.find({}).toArray();
+            return resultados;
+        } catch (erro) {
+            logErro(`Evento.buscarTodos: ${erro.message}`);
+            throw erro;
+        }
+    }
 }
 
 module.exports = Categoria;
