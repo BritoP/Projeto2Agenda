@@ -78,7 +78,7 @@ class Categoria {
             const resultados = await this.collection.find({}).toArray();
             return resultados;
         } catch (erro) {
-            logErro(`Evento.buscarTodos: ${erro.message}`);
+            logErro(`Categoria.buscarTodos: ${erro.message}`);
             throw erro;
         }
     }

@@ -5,6 +5,7 @@ const Usuario = require('./classes/Usuario');
 const Evento = require('./classes/Evento');
 const Categoria = require('./classes/Categoria');
 const logErro = require('./utils/logger'); 
+const ensureAuthenticated = require('./middlewares/auth');
 
 const app = express();
 const port = 3000;
